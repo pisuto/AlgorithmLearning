@@ -78,7 +78,7 @@ namespace avl {
 		using base_ptr   = typename node_traits<T>::base_ptr;
 		using node_ptr   = typename node_traits<T>::node_ptr;
 
-
+		tree_iterator() = default;
 
 	private:
 		base_ptr node_;
