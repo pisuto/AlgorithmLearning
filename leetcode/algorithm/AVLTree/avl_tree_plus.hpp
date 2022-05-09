@@ -741,8 +741,8 @@ namespace avl {
 			node->update_height();
 			temp->update_height();
 			/* Update root node */
-			if (!node->parent) {
-				root_ = node;
+			if (!temp->parent) {
+				root_ = temp;
 			}
 			return temp;
 		}
@@ -817,7 +817,7 @@ namespace avl {
 		}
 	};
 
-	/* 重载avl空间中的swap */
+	/* Overload swap */
 	template<typename T>
 	void swap(tree<T>& lhs, tree<T>& rhs) {
 		lhs.swap(rhs);
