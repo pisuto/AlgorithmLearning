@@ -225,12 +225,11 @@ namespace avl {
 			return **this <= *rhs;
 		}
 
-	private:
 		base_ptr node_;
 	};
 
 	template<typename T>
-	class const_tree_iterator : public std::iterator<std::bidirectional_iterator_tag, T> {
+	struct const_tree_iterator : public std::iterator<std::bidirectional_iterator_tag, T> {
 	public:
 		using value_type = T;
 		using pointer    = const T*;
@@ -333,7 +332,6 @@ namespace avl {
 			return **this <= *rhs;
 		}
 
-	private:
 		base_ptr node_;
 	};
 
@@ -482,20 +480,19 @@ namespace avl {
 		}
 
 		iterator erase(iterator it) {
-			auto node = it->node_->as_node();
+			auto node = it.node_->as_node();
 			auto next = ++it;
 			erase_native(node);
-			destroy_node(node);
 			return next;
 		}
 
 		iterator find(const_reference ref) {
 			auto temp = root_;
 			while (temp) {
-				if (temp->data == ref) {
+				if (temp->as_node()->data == ref) {
 					return temp;
 				}
-				else if (temp->data > ref) {
+				else if (temp->as_node()->data > ref) {
 					temp = temp->left;
 				}
 				else {
@@ -507,7 +504,7 @@ namespace avl {
 
 		void remove(const_reference ref) {
 			auto it = find(ref);
-			if (it) {
+			if (it != end()) {
 				erase(it);
 			}
 		}
@@ -525,7 +522,8 @@ namespace avl {
 				throw std::out_of_range("index is out of tree[]");
 			}
 			auto it = begin();
-			while (--i) {
+			size_type pos = 0;
+			while (pos++ < i) {
 				it++;
 			}
 			return it;
@@ -536,7 +534,8 @@ namespace avl {
 				throw std::out_of_range("index is out of tree[]");
 			}
 			auto it = cbegin();
-			while (--i) {
+			size_type pos = 0;
+			while (pos++ < i) {
 				it++;
 			}
 			return it;
@@ -651,11 +650,12 @@ namespace avl {
 			return res;
 		}
 
-		void erase_native(node_ptr node) {
-			node_ptr parent;
+		void erase_native(base_ptr node) {
+			base_ptr unbalanced_node;
 			if (!node->left) {
-				parent = node->parent;
+				unbalanced_node = node->parent;
 				reconnect_parent_with_new_child(node->right, node);
+				destroy_node(node);
 			}
 			else {
 				/* Find precessor node */
@@ -663,27 +663,42 @@ namespace avl {
 				while (temp->right) {
 					temp = temp->right;
 				}
-				parent = temp->parent;
-				/* 
-				 * If the left subtree exists, make temp's parent point
-				 * to the left subtree.
+				unbalanced_node = temp->parent;
+#if 0
+				/*
+				 * Copy the data of the leaf node to the deleted node,
+				 * in order to retain the node which should have been
+				 * deleted. This is the easist way to treat two nodes'
+				 * swap of their position in the tree.
 				 */
+				node->as_node()->data = temp->as_node()->data;
 				reconnect_parent_with_new_child(temp->left, temp);
-				/* replace node's position by temp */
-				reconnect_parent_with_new_child(temp, node);
-				/* connect child nodes with new parent */
-				node->left->parent = temp;
+				destroy_node(temp);
+#else
+				/* 
+				 * If temp isn't the left node of node, reconnect temp's
+				 * parent with its left node. Otherwise, it means the node
+				 * is the parent of temp. So unbalance state starts from
+				 * itself.
+				 */
+				if (temp->parent != node) {
+					reconnect_parent_with_new_child(temp->left, temp);
+				}
+				else {
+					unbalanced_node = temp;
+				}
+				/* Set node's right as temp's right. */
 				if (node->right) {
 					node->right->parent = temp;
 				}
-
-				temp->left = node->left;
 				temp->right = node->right;
-				node->left = nullptr;
-				node->right = nullptr;
+				/* Set node's parent as temp's parent. */
+				reconnect_parent_with_new_child(temp, node);
+				destroy_node(node);
+#endif
 			}
 
-			tree_rebalance(parent);
+			tree_rebalance(unbalanced_node);
 			size_--;
 			return;
 		}
