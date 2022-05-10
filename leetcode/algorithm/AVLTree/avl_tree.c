@@ -63,7 +63,7 @@ void avl_rebalance(AVL_NODE*** ancestors, int count) {
 		temp = *temp_ptr;
 		int factor = avl_balanced_factor(temp);
 		/* 
-		 *			*
+		 *		    *
 		 *		   / \
 		 *		 h+2  h
 		 * 
@@ -75,13 +75,13 @@ void avl_rebalance(AVL_NODE*** ancestors, int count) {
 		{
 			/*
 			 * ll: 
-			 *			A               B
+			 *          A               B
 			 *         / \             / \
-			 *		  B   C	  left	  D   A
+			 *        B   C	  left	  D   A
 			 *       h+2  h   ====>  h+1 h+2|h+1
-			 *		 / \                 / \
-			 *		D   E               E   C
-			 *	   h+1  h+1|h         h+1|h h
+			 *       / \                 / \
+			 *      D   E               E   C
+			 *     h+1  h+1|h         h+1|h h
 			 * 
 			 * As 'h' means height, it can be 0. And the tree
 			 * above shows the heights of all nodes except the
@@ -97,13 +97,13 @@ void avl_rebalance(AVL_NODE*** ancestors, int count) {
 			}
 			/*
 			 * lr: 
-			 *			A               A                 E
+			 *          A               A                 E
 			 *         / \             / \              /   \
-			 *		  B   C	  left    E   C   right    B     A
+			 *        B   C	  left    E   C   right    B     A
 			 *       h+2  h   ====>  h+2  h   ====>   h+1    h+1    
-			 *		 / \             / \             / \     /  \
-			 *		D   E           B   G           D   F   G    C
-			 *	    h  h+1         h+1 h|h-1        h h|h-1 h|h-1 h
+			 *       / \             / \             / \     /  \
+			 *      D   E           B   G           D   F   G    C
+			 *      h  h+1         h+1 h|h-1        h h|h-1 h|h-1 h
 			 *         / \         / \  
 			 *        F   G       D   F 
 			 *     h|h-1 h|h-1    h  h|h-1
@@ -315,10 +315,10 @@ void* avl_delete(AVL_NODE** node, GENERIC_KEY key, COMPARE_FUNC compare)
 		 * Explain the example below to understand the following code
 		 * better:
 		 *                     A                   
-		 *				     /   \
-		 *					B     ... 
-		 *				   /
-		 *				  C            
+		 *                   /   \
+		 *                  B     ... 
+		 *                 /
+		 *                C            
 		 * now delete node A, the array will store node's secondary 
 		 * pointer and 'temp_ptr' now means the pointer to 'A->left',
 		 * so 'temp' points to node B and as '*temp_ptr' is set to
@@ -332,7 +332,7 @@ void* avl_delete(AVL_NODE** node, GENERIC_KEY key, COMPARE_FUNC compare)
 		 *				    B	A
 		 *				    |  / \
 		 *				    | /  ...
-		 *					 C
+		 *                   C
 		 */
 		temp->left = deleted->left;
 		temp->right = deleted->right;
@@ -342,9 +342,9 @@ void* avl_delete(AVL_NODE** node, GENERIC_KEY key, COMPARE_FUNC compare)
 		 * by node B. If this pointer isn't the secondary pointer,
 		 * then the final reuslt return by 'node' is always the pointer
 		 * of node A, not node B:
-		 *				    	B
-		 *				       / \
-		 *					  C  ...
+		 *                      B
+		 *                     / \
+		 *                    C  ...
 		 */
 		*deleted_ptr = temp;
 

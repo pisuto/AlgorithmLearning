@@ -30,11 +30,11 @@ namespace avl {
 			height(1) {}
 
 		base_ptr self() {
-			return static_cast<base_ptr>(&*this); /* 实现父类到字类的强制转换 */
+			return static_cast<base_ptr>(&*this);
 		}
 
 		node_ptr as_node() {
-			return static_cast<node_ptr>(self()); /* 实现子类到父类的强制转换 */
+			return static_cast<node_ptr>(self());
 		}
 
 		int update_height() {
@@ -49,18 +49,19 @@ namespace avl {
 		using base_ptr = typename node_traits<T>::base_ptr;
 		using node_ptr = typename node_traits<T>::node_ptr;
 		
-		/* 数据域 */
+		/* Data domain */
 		T data;
 
-		tree_node() noexcept : 
-			tree_node_base() {}
+		/* 
+		 * If base class has non-paramter constructor, subclass 
+		 * will use this constructor to initialize base class.
+		 */
+		tree_node() noexcept = default;
 
 		tree_node(const T& t) noexcept :
-			tree_node_base(),
 			data(t) {}
 
 		tree_node(T&& t) noexcept :
-			tree_node_base(),
 			data(std::move(t)) {}
 
 		base_ptr as_base() {
@@ -455,6 +456,7 @@ namespace avl {
 
 		void swap(tree& rhs) {
 			std::swap(root_, rhs.root_);
+			std::swap(size_, rhs.size_);
 		}
 
 		size_t size() noexcept {
@@ -676,9 +678,9 @@ namespace avl {
 				destroy_node(temp);
 #else
 				/* 
-				 * If temp isn't the left node of node, reconnect temp's
-				 * parent with its left node. Otherwise, it means the node
-				 * is the parent of temp. So unbalance state starts from
+				 * If temp isn't the left child of node, reconnect temp's
+				 * parent with its left child. Otherwise, it means node
+				 * is the parent of temp. So unbalanced state starts from
 				 * itself.
 				 */
 				if (temp->parent != node) {
@@ -704,7 +706,8 @@ namespace avl {
 		}
 
 		/*
-		 *  This function reconnect node2's parent with node1 as new child. 
+		 * This function reconnect node2's parent with node1 as new 
+		 * child. 
 		 */
 		void reconnect_parent_with_new_child(base_ptr node1, base_ptr node2) {
 			if (node2->parent) {
