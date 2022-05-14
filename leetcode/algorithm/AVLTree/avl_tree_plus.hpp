@@ -4,8 +4,13 @@
 #include <type_traits>
 #include <functional>
 #include <queue>
+#include <stack>
 
 namespace avl {
+
+#define DEBUG_OUTPUT
+#define DEBUG_RECURISE_MODE
+#undef DEBUG_RECURISE_MODE
 
 	template<typename T> struct tree_node_base;
 	template<typename T> struct tree_node;
@@ -543,8 +548,10 @@ namespace avl {
 			return it;
 		}
 
+#ifdef DEBUG_OUTPUT
 		template<typename U>
 		friend std::ostream& operator<<(std::ostream&, const tree<U>&);
+#endif // DEBUG_OUTPUT
 
 	private:
 		void tree_rebalance(base_ptr node) { 
@@ -833,6 +840,163 @@ namespace avl {
 				destroy_node(node->right);
 			}
 		}
+
+#ifdef DEBUG_OUTPUT
+		void pre_order_traverse(base_ptr root,
+			std::function<void(base_ptr)> func) {
+#ifdef DEBUG_RECURISE_MODE
+			if (!root) return;
+			func(root);
+			pre_order_traverse(root->left, func);
+			pre_order_traverse(root->right, func);
+#else
+			auto node = root;
+			std::stack<base_ptr> stk;
+			while (!node || !stk.empty()) {
+				if (!node) {
+					func(node);
+					stk.push(node);
+					node = node->left;
+				}
+				else {
+					auto temp = stk.top();
+					stk.pop();
+					node = temp->right;
+				}
+			}
+#endif // DEBUG_RECURISE_MODE
+		}
+
+		void in_order_traverse(base_ptr root,
+			std::function<void(base_ptr)> func) {
+#ifdef DEBUG_RECURISE_MODE
+			if (!root) return;
+			in_order_traverse(root->left, func);
+			func(root);
+			in_order_traverse(root->right, func);
+#else
+			auto node = root;
+			std::stack<base_ptr> stk;
+			while (!node || !stk.empty()) {
+				if (!node) {
+					stk.push(node);
+					node = node->left;
+				}
+				else {
+					auto temp = stk.top();
+					/* 
+					 * After all left nodes are in the stack, then turn to
+					 * pop the stack. In this way, the pop order will be 
+					 * left, root and right.
+					 */
+					func(temp);
+					stk.pop();
+					node = temp->right;
+				}
+			}
+#endif // DEBUG_RECURISE_MODE
+		}
+
+		void post_order_traverse(base_ptr root,
+			std::function<void(base_ptr)> func) {
+#ifdef DEBUG_RECURISE_MODE
+			if (!root) return;
+			in_order_traverse(root->left, func);
+			in_order_traverse(root->right, func);
+			func(root);
+#else
+			/*
+			 * In post-order traversal, it's impossible to try method like
+			 * the above, due to the root and left nodes' pushed order. Only
+			 * firstly all nodes are pushed into the stack, then pop them 
+			 * one-by-one.
+			 */
+			auto node = root;
+			std::stack<base_ptr> in;
+			std::stack<base_ptr> out;
+			while (!node || !in.empty()) {
+				if (!node) {
+					in.push(node);
+					out.push(node);
+					node = node->right;
+				}
+				else {
+					auto temp = in.top();
+					in.pop();
+					node = temp->left;
+				}
+			}
+			/* The nodes in this stack is in root-right-left order. Then
+			 * pop order is in left-right-root.
+			 */
+			while (!out.empty()) {
+				auto temp = out.top();
+				func(temp);
+				out.pop();
+			}
+
+#if 0
+			auto node = root;
+			base_ptr prev;
+			std::stack<base_ptr> stk;
+			while (!node || !stk.empty()) {
+				if (!node) {
+					stk.push(node);
+					node = node->left;
+				}
+				else {
+					auto temp = stk.top();
+					stk.pop();
+					/* If the node is the right node's parent */
+					if (!temp->right || prev == temp->right) {
+						func(temp);
+						perv = temp;
+						temp = nullptr;
+					}
+					else {
+						stk.push(node);
+						node = node->right;
+
+					}
+				}
+			}
+#endif
+#endif // DEBUG_RECURISE_MODE
+		}
+
+		void level_order_traverse(base_ptr root,
+			std::function<void(base_ptr)> func) {
+			std::queue<base_ptr> que;
+			que.push(root);
+			while (!que.empty()) {
+				auto node = que.front();
+				que.pop();
+				if (node) {
+					func(node)
+					que.push(node->left);
+					que.push(node->right);
+				}
+			}
+		}
+
+		void depth_first_search_traverse(base_ptr root,
+			std::function<void(base_ptr)> func) {
+			auto node = root;
+			std::stack<base_ptr> stk;
+			stk.push(node);
+			while (!stk.empty()) {
+				auto temp = stk.top();
+				func(temp);
+				stk.pop();
+				if (temp->right) {
+					stk.push(temp->left);
+				}
+				if (temp->left) {
+					stk.push(temp->right);
+				}
+			}
+		}
+#endif // DEBUG_OUTPUT
 	};
 
 	/* Overload swap */
@@ -841,6 +1005,7 @@ namespace avl {
 		lhs.swap(rhs);
 	}
 
+#ifdef DEBUG_OUTPUT
 	template<typename U>
 	std::ostream& operator<<(std::ostream& os, const tree<U>& t)
 	{
@@ -858,4 +1023,5 @@ namespace avl {
 		os << std::endl;
 		return os;
 	}
+#endif
 }
