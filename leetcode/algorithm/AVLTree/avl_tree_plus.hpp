@@ -5,12 +5,23 @@
 #include <functional>
 #include <queue>
 #include <stack>
+#include <array>
 
 namespace avl {
 
 #define DEBUG_OUTPUT
 #define DEBUG_RECURISE_MODE
 #undef DEBUG_RECURISE_MODE
+
+#ifdef DEBUG_OUTPUT
+	enum class DEBUG_OUTPUT_METHOD {
+		INORDER,
+		PREORDER,
+		POSTORDER,
+		LEVELORDER,
+		DFSEARCH,
+	};
+#endif
 
 	template<typename T> struct tree_node_base;
 	template<typename T> struct tree_node;
@@ -344,22 +355,22 @@ namespace avl {
 	template<typename T>
 	class tree {
 	public:
-		using allocator_type	= std::allocator<T>;
-		using data_allocator	= std::allocator<T>;
-		using node_allocator    = std::allocator<tree_node<T>>;
-		using base_allocator    = std::allocator<tree_node_base<T>>;
+		using allocator_type = std::allocator<T>;
+		using data_allocator = std::allocator<T>;
+		using node_allocator = std::allocator<tree_node<T>>;
+		using base_allocator = std::allocator<tree_node_base<T>>;
 
-		using value_type		= typename allocator_type::value_type;
-		using reference			= typename allocator_type::reference;
-		using pointer			= typename allocator_type::pointer;
-		using const_pointer		= typename allocator_type::const_pointer;
-		using const_reference	= typename allocator_type::const_reference;
-		using size_type			= typename allocator_type::size_type;
-		using difference_type	= typename allocator_type::difference_type;
+		using value_type = typename allocator_type::value_type;
+		using reference = typename allocator_type::reference;
+		using pointer = typename allocator_type::pointer;
+		using const_pointer = typename allocator_type::const_pointer;
+		using const_reference = typename allocator_type::const_reference;
+		using size_type = typename allocator_type::size_type;
+		using difference_type = typename allocator_type::difference_type;
 
-		using iterator			= tree_iterator<T>;
-		using const_iterator	= const_tree_iterator<T>;
-		using reverse_iterator  = std::reverse_iterator<iterator>;
+		using iterator = tree_iterator<T>;
+		using const_iterator = const_tree_iterator<T>;
+		using reverse_iterator = std::reverse_iterator<iterator>;
 		using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
 		using base_ptr = typename node_traits<T>::base_ptr;
@@ -548,9 +559,32 @@ namespace avl {
 			return it;
 		}
 
-#ifdef DEBUG_OUTPUT
 		template<typename U>
 		friend std::ostream& operator<<(std::ostream&, const tree<U>&);
+
+#ifdef DEBUG_OUTPUT
+		void debug_traverse(DEBUG_OUTPUT_METHOD method, std::function<void(base_ptr)> func) {
+			switch (method)
+			{
+			case avl::DEBUG_OUTPUT_METHOD::INORDER:
+				in_order_traverse(root_, func);
+				break;
+			case avl::DEBUG_OUTPUT_METHOD::PREORDER:
+				pre_order_traverse(root_, func);
+				break;
+			case avl::DEBUG_OUTPUT_METHOD::POSTORDER:
+				post_order_traverse(root_, func);
+				break;
+			case avl::DEBUG_OUTPUT_METHOD::LEVELORDER:
+				level_order_traverse(root_, func);
+				break;
+			case avl::DEBUG_OUTPUT_METHOD::DFSEARCH:
+				depth_first_search_traverse(root_, func);
+				break;
+			default:
+				break;
+			}
+		}
 #endif // DEBUG_OUTPUT
 
 	private:
@@ -842,6 +876,7 @@ namespace avl {
 		}
 
 #ifdef DEBUG_OUTPUT
+	public:
 		void pre_order_traverse(base_ptr root,
 			std::function<void(base_ptr)> func) {
 #ifdef DEBUG_RECURISE_MODE
@@ -852,8 +887,8 @@ namespace avl {
 #else
 			auto node = root;
 			std::stack<base_ptr> stk;
-			while (!node || !stk.empty()) {
-				if (!node) {
+			while (node || !stk.empty()) {
+				if (node) {
 					func(node);
 					stk.push(node);
 					node = node->left;
@@ -877,20 +912,20 @@ namespace avl {
 #else
 			auto node = root;
 			std::stack<base_ptr> stk;
-			while (!node || !stk.empty()) {
-				if (!node) {
+			while (node || !stk.empty()) {
+				if (node) {
 					stk.push(node);
 					node = node->left;
 				}
 				else {
 					auto temp = stk.top();
+					stk.pop();
 					/* 
 					 * After all left nodes are in the stack, then turn to
 					 * pop the stack. In this way, the pop order will be 
 					 * left, root and right.
 					 */
 					func(temp);
-					stk.pop();
 					node = temp->right;
 				}
 			}
@@ -914,8 +949,8 @@ namespace avl {
 			auto node = root;
 			std::stack<base_ptr> in;
 			std::stack<base_ptr> out;
-			while (!node || !in.empty()) {
-				if (!node) {
+			while (node || !in.empty()) {
+				if (node) {
 					in.push(node);
 					out.push(node);
 					node = node->right;
@@ -939,8 +974,8 @@ namespace avl {
 			auto node = root;
 			base_ptr prev;
 			std::stack<base_ptr> stk;
-			while (!node || !stk.empty()) {
-				if (!node) {
+			while (node || !stk.empty()) {
+				if (node) {
 					stk.push(node);
 					node = node->left;
 				}
@@ -972,7 +1007,7 @@ namespace avl {
 				auto node = que.front();
 				que.pop();
 				if (node) {
-					func(node)
+					func(node);
 					que.push(node->left);
 					que.push(node->right);
 				}
@@ -1005,10 +1040,13 @@ namespace avl {
 		lhs.swap(rhs);
 	}
 
-#ifdef DEBUG_OUTPUT
 	template<typename U>
-	std::ostream& operator<<(std::ostream& os, const tree<U>& t)
+	std::ostream& operator<<(std::ostream& os, tree<U>& t)
 	{
+#ifdef DEBUG_OUTPUT
+		t.debug_traverse(DEBUG_OUTPUT_METHOD::INORDER, [&](typename tree<U>::base_ptr node)
+			{ os << " " << node->as_node()->data; });
+#else
 		std::queue<typename node_traits<U>::base_ptr> que;
 		que.push(t.root_);
 		while (!que.empty()) {
@@ -1020,8 +1058,8 @@ namespace avl {
 				que.push(e->right);
 			}
 		}
+#endif
 		os << std::endl;
 		return os;
 	}
-#endif
 }
