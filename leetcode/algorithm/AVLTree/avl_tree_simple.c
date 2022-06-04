@@ -3,14 +3,12 @@
 
 typedef int type;
 
-struct AVL_NODE_SIMPLE {
+typedef struct AVL_NODE_SIMPLE {
 	type key;
 	int height;
 	struct AVL_NODE_SIMPLE* left;
 	struct AVL_NODE_SIMPLE* right;
-};
-
-typedef struct AVL_NODE_SIMPLE NODE;
+} NODE;
 
 #define MAX(x, y) (x > y ? x : y)
 #define HEIGHT(n) (n ? n->height : 0)
