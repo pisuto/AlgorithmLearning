@@ -319,6 +319,7 @@ void simple_rb_insert(TREE* tree, TYPE data)
  * case 3: if brother is black and right child is red, convert brother's 
  * color same as parent's, convert parent and right child black. Finally
  * regard parent as root, turn left. The tree is balanced and exit.
+ * Reference to https://blog.csdn.net/v_JULY_v/article/details/6105630
  */
 void simple_rb_remove_fixup(TREE* tree, NODE* node, NODE* parent)
 {
@@ -341,6 +342,10 @@ void simple_rb_remove_fixup(TREE* tree, NODE* node, NODE* parent)
 			/* Case 2 */
 			if (bro->left->color == BLACK && bro->right->color == BLACK)
 			{
+				/*
+				 * In this case, because of decrease of left subtree's black nodes,
+				 * convert brother red. Continue next loop.
+				 */
 				bro->color = RED;
 				node = parent;
 				parent = node->parent;
@@ -362,6 +367,10 @@ void simple_rb_remove_fixup(TREE* tree, NODE* node, NODE* parent)
 					bro->right->color = BLACK;
 				}
 				simple_rb_rr_rotate(tree, parent);
+				/*
+				 * After case 3 and 4, the number of this subtree's black nodes is
+				 * the same as node's before deleted. So this tree is already balanced.
+				 */
 				break;
 			}
 		}
@@ -403,7 +412,7 @@ void simple_rb_remove_fixup(TREE* tree, NODE* node, NODE* parent)
 			}
 		}
 	}
-
+	/* The 'parent' is always black in all cases. */
 	node->color = BLACK;
 }
 
