@@ -100,7 +100,7 @@ void simple_rb_ll_rotate(TREE* t, NODE* n)
 		return;
 	}
 
-	if (x->parent->left = n) {
+	if (x->parent->left == n) {
 		x->parent->left = x;
 	}
 	else {
@@ -132,7 +132,7 @@ void simple_rb_rr_rotate(TREE* t, NODE* n)
 		return;
 	}
 
-	if (x->parent->left = n) {
+	if (x->parent->left == n) {
 		x->parent->left = x;
 	}
 	else {
@@ -316,9 +316,13 @@ void simple_rb_insert(TREE* tree, TYPE data)
  * turn left.
  * case 2: if brother is black and two children are black, then convert 
  * brother red and move node upward as parent.
- * case 3: if brother is black and right child is red, convert brother's 
- * color same as parent's, convert parent and right child black. Finally
+ * case 3: if borther is black left child is red, and right child is black,
+ * convert brother red and its left child black. Finally, regard brother as 
+ * root, turn right.
+ * case 4: if brother is black and right child is red, convert brother's 
+ * color same as parent's, convert parent and right child black. Finally,
  * regard parent as root, turn left. The tree is balanced and exit.
+ * 
  * Reference to https://blog.csdn.net/v_JULY_v/article/details/6105630
  */
 void simple_rb_remove_fixup(TREE* tree, NODE* node, NODE* parent)
@@ -330,7 +334,7 @@ void simple_rb_remove_fixup(TREE* tree, NODE* node, NODE* parent)
 	while (node != root && node->color == BLACK)
 	{
 		if (parent->left == node) {
-			bro = node->parent->right;
+			bro = parent->right;
 			/* Case 1 */
 			if (bro->color == RED) {
 				bro->color = BLACK;
@@ -353,9 +357,7 @@ void simple_rb_remove_fixup(TREE* tree, NODE* node, NODE* parent)
 			else {
 				/* Case 3*/
 				if (bro->right->color == BLACK) {
-					if (bro->left != nil) {
-						bro->left->color = BLACK;
-					}
+					bro->left->color = BLACK;
 					bro->color = RED;
 					simple_rb_ll_rotate(tree, bro);
 					bro = parent->right;
@@ -363,9 +365,7 @@ void simple_rb_remove_fixup(TREE* tree, NODE* node, NODE* parent)
 				/* Case 4 */
 				bro->color = parent->color;
 				parent->color = BLACK;
-				if (bro->right != nil) {
-					bro->right->color = BLACK;
-				}
+				bro->right->color = BLACK;
 				simple_rb_rr_rotate(tree, parent);
 				/*
 				 * After case 3 and 4, the number of this subtree's black nodes is
@@ -375,7 +375,7 @@ void simple_rb_remove_fixup(TREE* tree, NODE* node, NODE* parent)
 			}
 		}
 		else { /* Node is in right. */
-			bro = node->parent->left;
+			bro = parent->left;
 			/* Case 1 */
 			if (bro->color == RED) {
 				bro->color = BLACK;
@@ -394,9 +394,7 @@ void simple_rb_remove_fixup(TREE* tree, NODE* node, NODE* parent)
 			else {
 				/* Case 3*/
 				if (bro->left->color == BLACK) {
-					if (bro->right != nil) {
-						bro->right->color = BLACK;
-					}
+					bro->right->color = BLACK;
 					bro->color = RED;
 					simple_rb_rr_rotate(tree, bro);
 					bro = parent->left;
@@ -404,9 +402,7 @@ void simple_rb_remove_fixup(TREE* tree, NODE* node, NODE* parent)
 				/* Case 4 */
 				bro->color = parent->color;
 				parent->color = BLACK;
-				if (bro->left != nil) {
-					bro->left->color = BLACK;
-				}
+				bro->left->color = BLACK;
 				simple_rb_ll_rotate(tree, parent);
 				break;
 			}
@@ -495,7 +491,11 @@ int simple_rb_remove(TREE* tree, TYPE data)
 
 		/* Reconnect A and the successor. */
 		if (root == node) {
-			root = temp;
+			/* 
+			 * Remember root just a copy of tree->root. 'root = temp' cannot change 
+			 * the value of 'tree->root'.
+		     */
+			tree->root = temp;
 		}
 		else if (node->parent->left == node) {
 			node->parent->left = temp;
@@ -523,7 +523,7 @@ int simple_rb_remove(TREE* tree, TYPE data)
 		}
 
 		if (root == node) {
-			root = child;
+			tree->root = child;
 		}
 		else if (node->parent->left == node) {
 			node->parent->left = child;
@@ -574,6 +574,7 @@ void simple_rb_traverse(TREE* tree)
 		}
 		out++;
 	}
+	printf("\n");
 }
 
 
@@ -587,7 +588,35 @@ int main()
 	simple_rb_insert(tree, 2);
 	simple_rb_insert(tree, 3);
 	simple_rb_insert(tree, 4);
+	simple_rb_insert(tree, 5);
+	simple_rb_insert(tree, 6);
+	simple_rb_insert(tree, 7);
+	simple_rb_insert(tree, 8);
+	simple_rb_insert(tree, 9);
+	simple_rb_insert(tree, 10);
 
+	simple_rb_traverse(tree);
+
+	/*
+	 *               4                              6
+	 *              / \                            / \
+	 *             /   \                          /   \
+	 *            2     6                        4     8
+	 *           / \   / \                      / \   / \
+	 *          1   3 5   8       ====>        2   5 7   9
+	 *                   / \                    \         \
+	 *                  7   9                    3         10
+	 *                       \
+	 *                        10
+	 *                
+	 */
+	simple_rb_remove(tree, 1);
+	simple_rb_traverse(tree);
+
+	simple_rb_remove(tree, 6);
+	simple_rb_traverse(tree);
+
+	simple_rb_remove(tree, 10);
 	simple_rb_traverse(tree);
 
 	simple_rb_destroy(tree);
